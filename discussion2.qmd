@@ -1,0 +1,77 @@
+---
+title: "Week 2 Discussion"
+format: html
+editor_options: 
+  chunk_output_type: console
+---
+
+
+```{r}
+# load packages
+library(here)
+library(tidyverse)
+library(sf)
+library(tmap)
+```
+
+```{r}
+# read in data
+col <- st_read(here("data", "Colombia", "Colombia.shp"))
+roads <- st_read(here("data", "RDLINE_colombia", "RDLINE_colombia.shp"))
+obs <- read_csv(here("data", "dataves.csv"))
+```
+
+```{r}
+# rename the columns
+obs <- read_csv(here("data", "dataves.csv")) |>
+  as_tibble() |>
+  rename(long = decimal_longitude) |>
+  rename(lat = decimal_latitude)
+
+# convert it to an sf object
+obs <- obs |>
+  st_as_sf(coords = c("long", "lat"), crs = 4326)
+```
+
+```{r}
+# check classes
+class(obs)
+class(col)
+class(roads)
+
+# check geometry types
+unique(st_geometry_type(obs))
+unique(st_geometry_type(col))
+unique(st_geometry_type(roads))
+```
+
+```{r}
+# look at macro region of interest
+col_andean <- col |>
+  mutate(N1_MacroBi = as.factor(N1_MacroBi)) |>
+  filter(N1_MacroBi == "Andean")
+```
+
+```{r}
+# plot it
+tm_shape(col_andean) +
+  tm_polygons() +
+  tm_layout(main.title = "Andean Region of Colombia")
+```
+
+```{r}
+# check that the coordinate systems match
+st_crs(col) == st_crs(roads)
+st_crs(col) == st_crs(obs)
+```
+
+```{r}
+# match obs to the other coordinate reference systems
+aves <- st_transform(obs, crs = st_crs(col))
+
+# check it worked
+st_crs(col) == st_crs(aves)
+```
+
+
+
